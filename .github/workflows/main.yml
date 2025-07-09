@@ -1,34 +1,20 @@
 name: pull-and-export-revive
+on: workflow_dispatch
 
-on:
-  workflow_dispatch:            # 手动触发
+permissions: { actions: write, contents: read }
 
-permissions:                    # v4 必需
-  actions: write
-  contents: read
+concurrency:                  # 👈 防止排队挤爆，始终保留最新一次
+  group: revive-build
+  cancel-in-progress: true
 
 jobs:
   export:
-    runs-on: ubuntu-latest      # 普通 2-core runner（≈14 GB 空间）
-
+    runs-on: ubuntu-latest-8-cores   # 90 GB 空间
     steps:
-      # 1️⃣  设置 Docker（官方 buildx）
-      - name: Set up Docker
-        uses: docker/setup-buildx-action@v3
-
-      # 2️⃣  拉取 REVIVE SDK 镜像
-      - name: Pull REVIVE SDK
-        run: docker pull polixir/revive-sdk:latest
-
-      # 3️⃣  保存并按 1.9 GB 分片，文件前缀 revive_part_
-      - name: Save & split image
-        run: |
-          docker save polixir/revive-sdk:latest | \
-          split -b 1900m - revive_part_
-
-      # 4️⃣  上传所有分卷（v4）
-      - name: Upload parts
-        uses: actions/upload-artifact@v4
+      - uses: docker/setup-buildx-action@v3
+      - run: docker pull polixir/revive-sdk:latest
+      - run: docker save polixir/revive-sdk:latest -o revive-sdk.tar
+      - uses: actions/upload-artifact@v4
         with:
           name: revive-sdk
-          path: revive_part_*
+          path: revive-sdk.tar
