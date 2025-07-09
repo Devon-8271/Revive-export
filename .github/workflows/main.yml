@@ -1,0 +1,18 @@
+name: pull-and-export-revive
+
+on:
+  workflow_dispatch:        # 手动触发
+
+jobs:
+  export:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Pull SDK image
+        run: docker pull polixir/revive-sdk:latest
+      - name: Save into tar.gz
+        run: docker save polixir/revive-sdk:latest | gzip > revive-sdk.tar.gz
+      - name: Upload artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: revive-sdk
+          path: revive-sdk.tar.gz
