@@ -1,9 +1,8 @@
 name: pull-and-export-revive
-
 on:
   workflow_dispatch:
 
-permissions:  # 👈 必须写，v4 必须 actions: write 才能上传工件
+permissions:          # v4 必须显式写
   actions: write
   contents: read
 
@@ -11,17 +10,25 @@ jobs:
   export:
     runs-on: ubuntu-latest
     steps:
+      # 1️⃣  安装 Docker buildx（官方推荐）
       - name: Set up Docker
         uses: docker/setup-buildx-action@v3
 
+      # 2️⃣  拉取 REVIVE SDK 镜像
       - name: Pull REVIVE SDK
         run: docker pull polixir/revive-sdk:latest
 
-      - name: Save image to tar.gz
-        run: docker save polixir/revive-sdk:latest | gzip > revive-sdk.tar.gz
+      # 3️⃣  保存为 tar（不压缩，省下双倍空间）
+      - name: Save image to tar
+        run: docker save polixir/revive-sdk:latest -o revive-sdk.tar
 
+      # （可选）看看文件大小，确保 < 10 GB
+      - name: Show file size
+        run: du -h revive-sdk.tar
+
+      # 4️⃣  上传为 Artifact（v4）
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: revive-sdk
-          path: revive-sdk.tar.gz
+          path: revive-sdk.tar
