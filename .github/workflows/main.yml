@@ -1,33 +1,30 @@
 name: pull-and-export-revive
+
 on:
   workflow_dispatch:
 
-permissions:          # v4 必须显式写
+permissions:
   actions: write
   contents: read
 
 jobs:
   export:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-latest-8-cores   # 👈 关键点：使用大盘 runner（≈90GB 空间）
+
     steps:
-      # 1️⃣  安装 Docker buildx（官方推荐）
       - name: Set up Docker
         uses: docker/setup-buildx-action@v3
 
-      # 2️⃣  拉取 REVIVE SDK 镜像
       - name: Pull REVIVE SDK
         run: docker pull polixir/revive-sdk:latest
 
-      # 3️⃣  保存为 tar（不压缩，省下双倍空间）
       - name: Save image to tar
         run: docker save polixir/revive-sdk:latest -o revive-sdk.tar
 
-      # （可选）看看文件大小，确保 < 10 GB
-      - name: Show file size
+      - name: Show file size (optional)
         run: du -h revive-sdk.tar
 
-      # 4️⃣  上传为 Artifact（v4）
-      - name: Upload artifact
+      - name: Upload artifact (v4)
         uses: actions/upload-artifact@v4
         with:
           name: revive-sdk
